@@ -7,7 +7,7 @@ on:
   pull_request:
     branches:
       - 2.5.1.4850
-  workflow_dispatch:  # allows manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   build:
@@ -16,8 +16,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: 2.5.1.4850
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -27,7 +25,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '6.x'   # adjust if the backend targets a different version
+          dotnet-version: '6.x'
 
       - name: Install Yarn
         run: npm install -g yarn
@@ -42,11 +40,17 @@ jobs:
         working-directory: backend
         run: dotnet build --configuration Release
 
-      - name: Upload build artifacts
+      - name: Find build output (debug)
+        run: find backend -name "SmartPlaylist.dll" 2>/dev/null || echo "DLL not found"
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p dist
+          find backend -name "SmartPlaylist.dll" -path "*/bin/Release/*" -exec cp {} dist/ \;
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: SmartPlaylist-Plugin
-          path: |
-            backend/bin/Release/**
-            frontend/dist/**
-          if-no-files-found: warn
+          path: dist/SmartPlaylist.dll
+          if-no-files-found: error
