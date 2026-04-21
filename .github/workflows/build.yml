@@ -1,0 +1,52 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - 2.5.1.4850
+  pull_request:
+    branches:
+      - 2.5.1.4850
+  workflow_dispatch:  # allows manual trigger from GitHub UI
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: 2.5.1.4850
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.x'   # adjust if the backend targets a different version
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - name: Build Frontend
+        working-directory: frontend
+        run: |
+          yarn install
+          yarn build
+
+      - name: Build Backend
+        working-directory: backend
+        run: dotnet build --configuration Release
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartPlaylist-Plugin
+          path: |
+            backend/bin/Release/**
+            frontend/dist/**
+          if-no-files-found: warn
