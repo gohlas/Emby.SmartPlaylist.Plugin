@@ -1,13 +1,10 @@
 name: Build
 
 on:
-  push:
-    branches:
-      - 2.5.1.4850
-  pull_request:
-    branches:
-      - 2.5.1.4850
   workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
@@ -40,17 +37,15 @@ jobs:
         working-directory: backend
         run: dotnet build --configuration Release
 
-      - name: Find build output (debug)
-        run: find backend -name "SmartPlaylist.dll" 2>/dev/null || echo "DLL not found"
-
       - name: Collect artifacts
         run: |
           mkdir -p dist
-          find backend -name "SmartPlaylist.dll" -path "*/bin/Release/*" -exec cp {} dist/ \;
+          cp backend/SmartPlaylist/bin/Release/netstandard2.0/SmartPlaylist.dll dist/
+          cp frontend/dist/* dist/ 2>/dev/null || true
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: SmartPlaylist-Plugin
-          path: dist/SmartPlaylist.dll
+          path: dist/
           if-no-files-found: error
